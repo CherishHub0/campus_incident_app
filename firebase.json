@@ -1,0 +1,24 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "campus-incident-app-9a977",
+          "configurations": {
+            "android": "1:1027805209896:android:27a5ca91618469380a9c1d"
+          }
+        }
+      },
+      "android": {
+        "default": {
+          "projectId": "campus-incident-app-9a977",
+          "appId": "1:1027805209896:android:27a5ca91618469380a9c1d",
+          "fileOutput": "android/app/google-services.json"
+        }
+      }
+    }
+  }
+  }

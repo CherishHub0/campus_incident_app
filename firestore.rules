@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function verified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function staffEmail() {
+      return request.auth != null
+        && request.auth.token.email is string
+        && request.auth.token.email.lower().matches('^[^@]+@alueducation[.]com$');
+    }
+
+    function studentEmail() {
+      return request.auth != null
+        && request.auth.token.email is string
+        && request.auth.token.email.lower().matches('^[^@]+@alustudent[.]com$');
+    }
+
+    function isStaff() {
+      return verified() && (
+        staffEmail()
+        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff'
+      );
+    }
+
+    function roleMatchesEmail(role) {
+      return (staffEmail() && role == 'staff')
+        || (studentEmail() && role == 'student');
+    }
+
+    // ---- User profiles -------------------------------------------------
+    match /users/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isStaff());
+      // The email domain determines the role at registration.
+      allow create: if request.auth != null
+                    && request.auth.uid == uid
+                    && roleMatchesEmail(request.resource.data.role);
+      // Users may edit their profile but never change their own role.
+      allow update: if request.auth != null
+                    && request.auth.uid == uid
+                    && request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    // ---- Incident reports ----------------------------------------------
+    match /incidents/{id} {
+      allow read: if verified();
+
+      allow create: if verified()
+                    && request.resource.data.reporterId == request.auth.uid
+                    && request.resource.data.status == 'submitted'
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() >= 3
+                    && request.resource.data.description is string
+                    && request.resource.data.description.size() >= 10;
+
+      // Only staff can change status; and only these fields.
+      allow update: if isStaff()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['status', 'statusHistory', 'updatedAt', 'staffNote']);
+
+      // Owners may withdraw a report that hasn't been picked up yet; staff can delete any.
+      allow delete: if verified() &&
+                    ((resource.data.reporterId == request.auth.uid
+                      && resource.data.status == 'submitted')
+                     || isStaff());
+    }
+  }
+}

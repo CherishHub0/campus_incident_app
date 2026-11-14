@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "inputs": [
+    {
+      "id": "cloudinaryCloudName",
+      "type": "promptString",
+      "description": "Cloudinary cloud name"
+    },
+    {
+      "id": "cloudinaryUploadPreset",
+      "type": "promptString",
+      "description": "Cloudinary unsigned upload preset"
+    }
+  ],
+  "configurations": [
+    {
+      "name": "Campus Incident App",
+      "request": "launch",
+      "type": "dart",
+      "toolArgs": [
+        "--dart-define=CLOUDINARY_CLOUD_NAME=${input:cloudinaryCloudName}",
+        "--dart-define=CLOUDINARY_UPLOAD_PRESET=${input:cloudinaryUploadPreset}"
+      ]
+    }
+  ]
+}
